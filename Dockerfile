@@ -1,11 +1,16 @@
 FROM ubuntu:22.04
 
-# Install system deps
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y curl perl wget make ghostscript && \
+    apt-get install -y curl perl wget make ghostscript software-properties-common && \
     apt-get clean
 
-# Install TinyTeX (small LaTeX engine)
+# Install Node.js (v18 LTS)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    node -v && npm -v
+
+# Install TinyTeX (lightweight LaTeX)
 RUN curl -L https://yihui.org/tinytex/install-unx.sh -o install.sh && \
     chmod +x install.sh && \
     ./install.sh && \
@@ -13,7 +18,7 @@ RUN curl -L https://yihui.org/tinytex/install-unx.sh -o install.sh && \
 
 ENV PATH="/root/.TinyTeX/bin/x86_64-linux:$PATH"
 
-# Install needed LaTeX packages
+# Install required LaTeX packages
 RUN tlmgr install \
     latex-bin \
     latex \
@@ -23,6 +28,7 @@ RUN tlmgr install \
     xcolor \
     hyperref
 
+# App setup
 WORKDIR /app
 
 COPY package*.json ./
