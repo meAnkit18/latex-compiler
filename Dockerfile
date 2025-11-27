@@ -1,27 +1,36 @@
-# Base image with Node
-FROM node:20-bookworm
+FROM ubuntu:22.04
 
-# Install LaTeX (this is heavy)
+# Install system deps
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    texlive-full \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    apt-get install -y curl perl wget make ghostscript && \
+    apt-get clean
+
+# Install TinyTeX (small LaTeX engine)
+RUN curl -L https://yihui.org/tinytex/install-unx.sh -o install.sh && \
+    chmod +x install.sh && \
+    ./install.sh && \
+    /root/.TinyTeX/bin/*/tlmgr path add
+
+ENV PATH="/root/.TinyTeX/bin/x86_64-linux:$PATH"
+
+# Install needed LaTeX packages
+RUN tlmgr install \
+    latex-bin \
+    latex \
+    graphics \
+    tools \
+    geometry \
+    xcolor \
+    hyperref
 
 WORKDIR /app
 
-# Copy package files first (better layer caching)
 COPY package*.json ./
-
 RUN npm install
 
-# Copy rest of the app
 COPY . .
 
-# Build TypeScript
 RUN npm run build
 
-# Expose port (for local info; Render uses PORT env)
 EXPOSE 10000
-
-# Start command
 CMD ["npm", "start"]
